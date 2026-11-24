@@ -1,0 +1,782 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMOBX CLICKER 2.0</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#090909;color:white;
+ font-family:Arial,sans-serif;text-align:center;
+ padding-bottom:35px
+}
+header{
+ padding:20px;background:#171717;
+ border-bottom:1px solid #a66c18
+}
+.logo{
+ font-size:30px;font-weight:900;color:#ffbd35;
+ text-shadow:0 0 15px #ff9900
+}
+.subtitle{font-size:11px;color:#aaa;margin-top:5px}
+.balance{
+ margin:15px auto;padding:15px;width:92%;
+ max-width:450px;background:#1c1c1c;
+ border:1px solid #a66c18;border-radius:16px
+}
+.balance strong{font-size:30px;color:#ffc247}
+.stat{font-size:13px;color:#aaa}
+.progress{
+ height:9px;background:#333;border-radius:10px;
+ overflow:hidden;margin:12px
+}
+.progress div{
+ height:100%;width:0%;
+ background:linear-gradient(90deg,#d66b00,#ffcf55)
+}
+.tabs{
+ display:flex;justify-content:center;gap:5px;
+ margin:12px 4px;flex-wrap:wrap
+}
+button{
+ border:0;border-radius:10px;padding:11px;
+ background:#292929;color:white;font-weight:bold;
+ font-size:13px;cursor:pointer
+}
+button:disabled{opacity:.4}
+button:active{transform:scale(.97)}
+.tabs button.active,.mainbtn{
+ background:linear-gradient(135deg,#ffbd35,#d66b00);
+ color:#17100a
+}
+.page{display:none;padding:12px}
+.page.active{display:block}
+.mainbtn{
+ width:185px;height:185px;border-radius:50%;
+ font-size:60px;border:5px solid #ffe09a;
+ box-shadow:0 0 35px #d98219;
+ margin:20px auto;display:block
+}
+.card{
+ background:#1c1c1c;border:1px solid #62451d;
+ border-radius:15px;padding:15px;
+ margin:10px auto;max-width:520px
+}
+.card h3{color:#ffc247}
+.card button{background:#a96a13;margin-top:8px;width:100%}
+.grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px;max-width:650px;margin:auto
+}
+.item{
+ background:#1c1c1c;border:1px solid #62451d;
+ border-radius:12px;padding:12px
+}
+.emoji{font-size:36px}
+.item strong{display:block;font-size:13px;margin:5px}
+.item button{width:100%;font-size:12px;margin-top:7px}
+.common{color:#aaa}
+.rare{color:#4daeff}
+.epic{color:#c17aff}
+.legendary{color:#ffc247}
+.mythic{color:#ff5555}
+input,select{
+ width:100%;padding:12px;background:#111;
+ color:white;border:1px solid #62451d;
+ border-radius:9px;margin:7px 0
+}
+#message,#caseResult,#upgradeResult,#promoResult{
+ color:#ffc247;min-height:25px;margin:12px
+}
+.small{font-size:12px;color:#aaa}
+.rouletteWindow{
+ position:relative;overflow:hidden;height:130px;
+ background:#101010;border:2px solid #b57b20;
+ border-radius:12px;margin:15px 0
+}
+.rouletteTrack{
+ display:flex;gap:7px;position:absolute;
+ left:0;top:0;height:100%;align-items:center;
+ will-change:transform
+}
+.rouletteItem{
+ flex:0 0 105px;height:100px;
+ background:#242424;border:1px solid #70501c;
+ border-radius:10px;display:flex;
+ flex-direction:column;justify-content:center;
+ align-items:center;padding:5px;font-size:12px
+}
+.rouletteItem .emoji{font-size:34px}
+.pointer{
+ position:absolute;z-index:2;top:0;bottom:0;
+ left:50%;width:3px;background:#ffbd35;
+ transform:translateX(-50%);
+ box-shadow:0 0 10px #ffbd35
+}
+.pointer:before{
+ content:"▼";position:absolute;top:0;left:50%;
+ transform:translateX(-50%);color:#ffbd35
+}
+.wheelWrap{
+ width:250px;height:250px;position:relative;
+ margin:20px auto
+}
+.wheel{
+ width:100%;height:100%;border-radius:50%;
+ border:5px solid #ffbd35;
+ background:conic-gradient(
+ #a85d11 0 45deg,#242424 45deg 90deg,
+ #d18a22 90deg 135deg,#242424 135deg 180deg,
+ #a85d11 180deg 225deg,#242424 225deg 270deg,
+ #d18a22 270deg 315deg,#242424 315deg 360deg
+ );
+ transition:transform 4s cubic-bezier(.12,.7,.12,1);
+ box-shadow:0 0 22px #a66c18
+}
+.wheelArrow{
+ position:absolute;top:-13px;left:50%;
+ transform:translateX(-50%);font-size:34px;
+ color:#ffbd35;z-index:2
+}
+.wheelCenter{
+ position:absolute;top:50%;left:50%;
+ transform:translate(-50%,-50%);
+ width:65px;height:65px;border-radius:50%;
+ background:#171717;border:3px solid #ffbd35;
+ display:flex;align-items:center;justify-content:center;
+ font-weight:bold;color:#ffbd35
+}
+#caseOpening{
+ position:fixed;z-index:9999;left:50%;top:50%;
+ transform:translate(-50%,-50%);
+ width:min(94vw,520px);max-height:85vh;
+ overflow-y:auto;margin:0;
+ box-shadow:0 0 0 100vmax rgba(0,0,0,.88),
+ 0 0 40px #ffae28;background:#171717
+}
+#caseOpening h3{font-size:21px}
+#caseOpening .rouletteWindow{height:140px}
+#caseOpening .rouletteItem{height:110px}
+.hidden{display:none!important}
+footer{color:#555;font-size:11px;margin-top:25px}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">👑 SMOBX</div>
+ <div class="subtitle">CLICKER • CASES • SKINS • UPGRADER 2.0</div>
+</header>
+
+<div class="balance">
+ <div>🪙 ТВОЇ МОНЕТИ</div>
+ <strong id="coins">0</strong>
+ <div class="stat">⭐ Рівень: <span id="level">1</span></div>
+ <div class="progress"><div id="xpbar"></div></div>
+ <div class="stat">
+ XP: <span id="xp">0</span> /
+ <span id="nextxp">100</span>
+ </div>
+</div>
+
+<div class="tabs">
+ <button class="active" onclick="showPage('click',this)">⚡ Клікер</button>
+ <button onclick="showPage('cases',this)">📦 Кейси</button>
+ <button onclick="showPage('inventory',this)">🎒 Інвентар</button>
+ <button onclick="showPage('upgrader',this)">🔧 Апгрейд</button>
+ <button onclick="showPage('shop',this)">🚀 Магазин</button>
+ <button onclick="showPage('profile',this)">👤 Профіль</button>
+</div>
+
+<!-- CLICKER -->
+<section class="page active" id="click">
+ <h2>⚡ SMOBX CLICKER</h2>
+ <p class="stat">Натискай та заробляй монети!</p>
+ <button class="mainbtn" onclick="clickCoin()">👆</button>
+ <h3>+<span id="power">1</span> 🪙 за клік</h3>
+ <div id="message">Починай свою пригоду!</div>
+ <div class="card">
+  <h3>📊 Твоя статистика</h3>
+  Кліків: <b id="clicks">0</b><br><br>
+  Зароблено: <b id="earned">0</b> 🪙
+ </div>
+</section>
+
+<!-- CASES -->
+<section class="page" id="cases">
+ <h2>📦 МАГАЗИН КЕЙСІВ</h2>
+ <p class="small">Відкривай кейси та збирай колекцію!</p>
+ <div id="caseGrid"></div>
+</section>
+
+<!-- CASE OPENING -->
+<div class="card hidden" id="caseOpening">
+ <button onclick="closeCase()" style="width:100%">✖ ЗАКРИТИ</button>
+ <h3 id="caseTitle"></h3>
+ <p class="small">Який скін зупиниться під покажчиком?</p>
+ <div class="rouletteWindow">
+  <div class="pointer"></div>
+  <div class="rouletteTrack" id="caseTrack"></div>
+ </div>
+ <div id="caseResult"></div>
+ <button id="caseOpenAgain" onclick="spinCase()">ВІДКРИТИ ЩЕ РАЗ</button>
+</div>
+
+<!-- INVENTORY -->
+<section class="page" id="inventory">
+ <h2>🎒 МІЙ ІНВЕНТАР</h2>
+ <p>Предметів: <b id="inventoryCount">0</b></p>
+ <p>Вартість колекції: <b id="inventoryValue">0</b> 🪙</p>
+ <div class="grid" id="inventoryGrid"></div>
+</section>
+
+<!-- UPGRADER -->
+<section class="page" id="upgrader">
+ <h2>🔧 АПГРЕЙДЕР</h2>
+ <div class="card">
+  <p class="small">Обери свій скін і бажаний предмет.</p>
+
+  <label>Твій предмет</label>
+  <select id="upgradeFrom" onchange="updateUpgradeInfo()"></select>
+
+  <label>Бажаний предмет</label>
+  <select id="upgradeTo" onchange="updateUpgradeInfo()"></select>
+
+  <h2 id="upgradeChance">—</h2>
+  <p id="upgradeHint" class="small"></p>
+  <p id="upgradeDifference" class="small"></p>
+
+  <div class="wheelWrap">
+   <div class="wheelArrow">▼</div>
+   <div class="wheel" id="upgradeWheel"></div>
+   <div class="wheelCenter">SMOBX</div>
+  </div>
+
+  <div id="upgradeResult"></div>
+  <button id="upgradeButton" style="width:100%" onclick="performUpgrade()">
+   КРУТИТИ АПГРЕЙД
+  </button>
+  <p class="small">
+   При невдачі вартість твого предмета зменшиться на 50%.
+  </p>
+ </div>
+</section>
+
+<!-- SHOP -->
+<section class="page" id="shop">
+ <h2>🚀 МАГАЗИН ПОКРАЩЕНЬ</h2>
+ <div id="shopGrid"></div>
+</section>
+
+<!-- PROFILE -->
+<section class="page" id="profile">
+ <h2>👤 МІЙ ПРОФІЛЬ</h2>
+ <div class="card">
+  <div style="font-size:55px">👑</div>
+  <h2>SMOBX PLAYER</h2>
+  <p>Рівень: <b id="profileLevel">1</b></p>
+  <p>Монети: <b id="profileCoins">0</b></p>
+  <p>Кліків: <b id="profileClicks">0</b></p>
+  <p>Скіни: <b id="profileSkins">0</b></p>
+  <p>Відкрито кейсів: <b id="profileCases">0</b></p>
+ </div>
+
+ <div class="card">
+  <h3>🎟️ ПРОМОКОДИ</h3>
+  <input id="promoInput" placeholder="Введи промокод">
+  <button onclick="usePromo()" style="width:100%">АКТИВУВАТИ</button>
+  <div id="promoResult"></div>
+ </div>
+
+ <div class="card">
+  <h3>💾 ЗБЕРЕЖЕННЯ</h3>
+  <p class="small">Твій прогрес зберігається автоматично.</p>
+  <button onclick="saveGame()" style="width:100%">ЗБЕРЕГТИ ГРУ</button>
+  <button onclick="resetGame()" style="width:100%;background:#8b2727">
+   СКИНУТИ ПРОГРЕС
+  </button>
+ </div>
+</section>
+
+<footer>SMOBX CLICKER 2.0 • YOUR OWN GAME</footer>
+
+<script>
+const skins = [
+ {id:"wood",name:"Wooden Skin",emoji:"🪵",value:20,rarity:"common"},
+ {id:"stone",name:"Stone Skin",emoji:"🪨",value:50,rarity:"common"},
+ {id:"blue",name:"Blue Storm",emoji:"🌊",value:100,rarity:"rare"},
+ {id:"fire",name:"Fire Skin",emoji:"🔥",value:180,rarity:"rare"},
+ {id:"ice",name:"Ice Dragon",emoji:"❄️",value:300,rarity:"epic"},
+ {id:"purple",name:"Purple King",emoji:"👾",value:500,rarity:"epic"},
+ {id:"gold",name:"Golden King",emoji:"👑",value:900,rarity:"legendary"},
+ {id:"diamond",name:"Diamond",emoji:"💎",value:1600,rarity:"legendary"},
+ {id:"dragon",name:"Dragon Lord",emoji:"🐉",value:3000,rarity:"mythic"},
+ {id:"galaxy",name:"Galaxy",emoji:"🌌",value:5500,rarity:"mythic"},
+ {id:"crown",name:"SMOBX Crown",emoji:"🏆",value:10000,rarity:"mythic"}
+];
+
+const cases = [
+ {id:"start",name:"START CASE",emoji:"📦",price:100,items:["wood","stone","blue","fire"]},
+ {id:"silver",name:"SILVER CASE",emoji:"🥈",price:350,items:["stone","blue","fire","ice","purple"]},
+ {id:"gold",name:"GOLD CASE",emoji:"🥇",price:800,items:["blue","fire","ice","purple","gold"]},
+ {id:"diamond",name:"DIAMOND CASE",emoji:"💎",price:1800,items:["ice","purple","gold","diamond"]},
+ {id:"dragon",name:"DRAGON CASE",emoji:"🐉",price:4000,items:["purple","gold","diamond","dragon"]},
+ {id:"galaxy",name:"GALAXY CASE",emoji:"🌌",price:8000,items:["gold","diamond","dragon","galaxy","crown"]},
+ {id:"royal",name:"ROYAL CASE",emoji:"👑",price:15000,items:["diamond","dragon","galaxy","crown"]}
+];
+
+const shopItems = [
+ {id:"power1",name:"Сила кліку +1",emoji:"⚡",price:100,power:1},
+ {id:"power2",name:"Сила кліку +5",emoji:"🔥",price:600,power:5},
+ {id:"power3",name:"Сила кліку +15",emoji:"💥",price:2000,power:15},
+ {id:"power4",name:"Сила кліку +50",emoji:"👑",price:7000,power:50}
+];
+
+const defaultState = {
+ coins:0,
+ xp:0,
+ level:1,
+ power:1,
+ clicks:0,
+ earned:0,
+ casesOpened:0,
+ inventory:[],
+ usedPromos:[],
+ purchased:[]
+};
+
+let game;
+let currentCase=null;
+let spinning=false;
+let upgradeSpinning=false;
+let uid=1;
+
+function loadGame(){
+ try{
+  const saved=localStorage.getItem("smobx_clicker_2");
+  game=saved?{...defaultState,...JSON.parse(saved)}:{...defaultState};
+ }catch(e){
+  game={...defaultState};
+ }
+ if(!Array.isArray(game.inventory))game.inventory=[];
+ if(!Array.isArray(game.usedPromos))game.usedPromos=[];
+ if(!Array.isArray(game.purchased))game.purchased=[];
+ uid=game.inventory.reduce((m,x)=>Math.max(m,(x.uid||0)+1),1);
+}
+
+function saveGame(){
+ localStorage.setItem("smobx_clicker_2",JSON.stringify(game));
+}
+
+function format(n){
+ return Math.floor(n).toLocaleString("uk-UA");
+}
+
+function getSkin(id){
+ return skins.find(s=>s.id===id);
+}
+
+function addXP(amount){
+ game.xp+=amount;
+ while(game.xp>=game.level*100){
+  game.xp-=game.level*100;
+  game.level++;
+  game.coins+=game.level*25;
+  document.getElementById("message").textContent=
+   "🎉 Новий рівень! Бонус: "+game.level*25+" монет!";
+ }
+}
+
+function addCoins(amount){
+ game.coins+=amount;
+ game.earned+=amount;
+}
+
+function clickCoin(){
+ game.coins+=game.power;
+ game.earned+=game.power;
+ game.clicks++;
+ addXP(1);
+ document.getElementById("message").textContent=
+  "⚡ +"+game.power+" монет!";
+ updateAll();
+}
+
+function showPage(id,button){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
+ if(button)button.classList.add("active");
+ if(id==="upgrader")updateUpgrader();
+ if(id==="inventory")renderInventory();
+ if(id==="profile")updateProfile();
+}
+
+function renderCases(){
+ const grid=document.getElementById("caseGrid");
+ grid.innerHTML="";
+ cases.forEach(c=>{
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerHTML=`
+   <div style="font-size:40px">${c.emoji}</div>
+   <h3>${c.name}</h3>
+   <p>Ціна: <b>${format(c.price)}</b> 🪙</p>
+   <p class="small">Предметів у кейсі: ${c.items.length}</p>
+   <button onclick="openCase('${c.id}')">ВІДКРИТИ КЕЙС</button>
+  `;
+  grid.appendChild(div);
+ });
+}
+
+function openCase(id){
+ const c=cases.find(x=>x.id===id);
+ if(!c)return;
+ if(game.coins<c.price){
+  alert("Недостатньо монет!");
+  return;
+ }
+ game.coins-=c.price;
+ currentCase=c;
+ game.casesOpened++;
+ document.getElementById("caseOpening").classList.remove("hidden");
+ document.getElementById("caseTitle").textContent=c.emoji+" "+c.name;
+ document.getElementById("caseResult").textContent="";
+ document.getElementById("caseOpenAgain").disabled=true;
+ spinAnimation();
+ updateAll();
+}
+
+function closeCase(){
+ document.getElementById("caseOpening").classList.add("hidden");
+ currentCase=null;
+ spinning=false;
+}
+
+function spinCase(){
+ if(!currentCase||spinning)return;
+ if(game.coins<currentCase.price){
+  document.getElementById("caseResult").textContent="Недостатньо монет!";
+  return;
+ }
+ game.coins-=currentCase.price;
+ game.casesOpened++;
+ document.getElementById("caseResult").textContent="";
+ document.getElementById("caseOpenAgain").disabled=true;
+ spinAnimation();
+ updateAll();
+}
+
+function randomSkin(caseData){
+ const ids=caseData.items;
+ const weights=ids.map(id=>{
+  const s=getSkin(id);
+  return s.rarity==="common"?45:
+   s.rarity==="rare"?28:
+   s.rarity==="epic"?17:
+   s.rarity==="legendary"?8:3;
+ });
+ const total=weights.reduce((a,b)=>a+b,0);
+ let r=Math.random()*total;
+ for(let i=0;i<ids.length;i++){
+  r-=weights[i];
+  if(r<=0)return getSkin(ids[i]);
+ }
+ return getSkin(ids[0]);
+}
+
+function spinAnimation(){
+ if(spinning)return;
+ spinning=true;
+ const track=document.getElementById("caseTrack");
+ track.innerHTML="";
+ track.style.transition="none";
+ track.style.transform="translateX(0px)";
+
+ const winner=randomSkin(currentCase);
+ const total=35;
+ const winnerIndex=total-4;
+
+ for(let i=0;i<total;i++){
+  const skin=i===winnerIndex?winner:randomSkin(currentCase);
+  const div=document.createElement("div");
+  div.className="rouletteItem";
+  div.innerHTML=`
+   <div class="emoji">${skin.emoji}</div>
+   <b class="${skin.rarity}">${skin.name}</b>
+   <small>${format(skin.value)} 🪙</small>
+  `;
+  track.appendChild(div);
+ }
+
+ requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+   const windowWidth=document.querySelector(".rouletteWindow").clientWidth;
+   const itemWidth=112;
+   const offset=windowWidth/2-(winnerIndex*itemWidth+52.5);
+   track.style.transition="transform 5s cubic-bezier(.12,.7,.12,1)";
+   track.style.transform=`translateX(${offset}px)`;
+  });
+ });
+
+ setTimeout(()=>{
+  game.inventory.push({
+   uid:uid++,
+   skinId:winner.id,
+   value:winner.value
+  });
+  addXP(15);
+  document.getElementById("caseResult").innerHTML=
+   `🎉 ТИ ВИГРАВ!<br><span class="${winner.rarity}">${winner.emoji} ${winner.name}</span><br>Вартість: ${format(winner.value)} 🪙`;
+  document.getElementById("caseOpenAgain").disabled=false;
+  spinning=false;
+  updateAll();
+ },5200);
+}
+
+function renderInventory(){
+ const grid=document.getElementById("inventoryGrid");
+ grid.innerHTML="";
+ game.inventory.forEach(item=>{
+  const skin=getSkin(item.skinId);
+  if(!skin)return;
+  const div=document.createElement("div");
+  div.className="item";
+  div.innerHTML=`
+   <div class="emoji">${skin.emoji}</div>
+   <strong class="${skin.rarity}">${skin.name}</strong>
+   <div class="small">Ціна: ${format(item.value)} 🪙</div>
+   <button onclick="sellSkin(${item.uid})">ПРОДАТИ</button>
+  `;
+  grid.appendChild(div);
+ });
+ if(!game.inventory.length){
+  grid.innerHTML="<p class='small'>Тут поки немає скінів. Відкрий свій перший кейс!</p>";
+ }
+ document.getElementById("inventoryCount").textContent=game.inventory.length;
+ document.getElementById("inventoryValue").textContent=
+  format(game.inventory.reduce((a,b)=>a+b.value,0));
+}
+
+function sellSkin(id){
+ const index=game.inventory.findIndex(x=>x.uid===id);
+ if(index<0)return;
+ const item=game.inventory[index];
+ const skin=getSkin(item.skinId);
+ if(!confirm("Продати "+skin.name+" за "+format(item.value)+" монет?"))return;
+ addCoins(item.value);
+ game.inventory.splice(index,1);
+ updateAll();
+}
+
+function updateUpgrader(){
+ const from=document.getElementById("upgradeFrom");
+ const to=document.getElementById("upgradeTo");
+ const oldFrom=from.value;
+ const oldTo=to.value;
+ from.innerHTML="";
+ game.inventory.forEach(item=>{
+  const skin=getSkin(item.skinId);
+  if(!skin)return;
+  const opt=document.createElement("option");
+  opt.value=item.uid;
+  opt.textContent=skin.emoji+" "+skin.name+" ("+format(item.value)+")";
+  from.appendChild(opt);
+ });
+ to.innerHTML="";
+ skins.forEach(skin=>{
+  const opt=document.createElement("option");
+  opt.value=skin.id;
+  opt.textContent=skin.emoji+" "+skin.name+" ("+format(skin.value)+")";
+  to.appendChild(opt);
+ });
+ if([...from.options].some(o=>o.value===oldFrom))from.value=oldFrom;
+ if([...to.options].some(o=>o.value===oldTo))to.value=oldTo;
+ updateUpgradeInfo();
+}
+
+function updateUpgradeInfo(){
+ const fromId=Number(document.getElementById("upgradeFrom").value);
+ const toId=document.getElementById("upgradeTo").value;
+ const item=game.inventory.find(x=>x.uid===fromId);
+ const target=getSkin(toId);
+ const chanceEl=document.getElementById("upgradeChance");
+ const button=document.getElementById("upgradeButton");
+
+ if(!item||!target){
+  chanceEl.textContent="Немає предметів";
+  document.getElementById("upgradeHint").textContent="Спочатку відкрий кейс.";
+  document.getElementById("upgradeDifference").textContent="";
+  button.disabled=true;
+  return;
+ }
+
+ const chance=Math.min(85,Math.max(5,Math.floor(item.value/target.value*75)));
+ const possible=target.value>item.value;
+ chanceEl.textContent=possible?chance+"% шанс":"Обери дорожчий скін";
+ document.getElementById("upgradeHint").textContent=
+  "Твій предмет: "+format(item.value)+" 🪙";
+ document.getElementById("upgradeDifference").textContent=
+  "Ціль: "+format(target.value)+" 🪙";
+ button.disabled=!possible||upgradeSpinning;
+}
+
+function performUpgrade(){
+ if(upgradeSpinning)return;
+ const fromId=Number(document.getElementById("upgradeFrom").value);
+ const targetId=document.getElementById("upgradeTo").value;
+ const item=game.inventory.find(x=>x.uid===fromId);
+ const target=getSkin(targetId);
+ if(!item||!target||target.value<=item.value)return;
+
+ const chance=Math.min(85,Math.max(5,Math.floor(item.value/target.value*75)));
+ upgradeSpinning=true;
+ document.getElementById("upgradeButton").disabled=true;
+ document.getElementById("upgradeResult").textContent="🎰 Крутимо...";
+ const wheel=document.getElementById("upgradeWheel");
+ wheel.style.transition="none";
+ wheel.style.transform="rotate(0deg)";
+
+ setTimeout(()=>{
+  const win=Math.random()*100<chance;
+  wheel.style.transition="transform 4s cubic-bezier(.12,.7,.12,1)";
+  wheel.style.transform="rotate("+(1440+Math.random()*360)+"deg)";
+
+  setTimeout(()=>{
+   if(win){
+    item.skinId=target.id;
+    item.value=target.value;
+    document.getElementById("upgradeResult").innerHTML=
+     "🎉 УСПІХ! Ти отримав "+target.emoji+" "+target.name+"!";
+    addXP(30);
+   }else{
+    item.value=Math.max(1,Math.floor(item.value*0.5));
+    document.getElementById("upgradeResult").textContent=
+     "❌ Невдача! Вартість предмета зменшилася на 50%.";
+   }
+   upgradeSpinning=false;
+   updateAll();
+   updateUpgrader();
+  },4100);
+ },100);
+}
+
+function renderShop(){
+ const grid=document.getElementById("shopGrid");
+ grid.innerHTML="";
+ shopItems.forEach(item=>{
+  const bought=game.purchased.includes(item.id);
+  const div=document.createElement("div");
+  div.className="card";
+  div.innerHTML=`
+   <div style="font-size:38px">${item.emoji}</div>
+   <h3>${item.name}</h3>
+   <p>Ціна: ${format(item.price)} 🪙</p>
+   <button ${bought?"disabled":""} onclick="buyUpgrade('${item.id}')">
+    ${bought?"КУПЛЕНО":"КУПИТИ"}
+   </button>
+  `;
+  grid.appendChild(div);
+ });
+}
+
+function buyUpgrade(id){
+ const item=shopItems.find(x=>x.id===id);
+ if(!item||game.purchased.includes(id))return;
+ if(game.coins<item.price){
+  alert("Недостатньо монет!");
+  return;
+ }
+ game.coins-=item.price;
+ game.power+=item.power;
+ game.purchased.push(id);
+ addXP(20);
+ updateAll();
+ document.getElementById("message").textContent=
+  "🚀 Покращення придбано!";
+}
+
+function updateProfile(){
+ document.getElementById("profileLevel").textContent=game.level;
+ document.getElementById("profileCoins").textContent=format(game.coins);
+ document.getElementById("profileClicks").textContent=format(game.clicks);
+ document.getElementById("profileSkins").textContent=game.inventory.length;
+ document.getElementById("profileCases").textContent=game.casesOpened;
+}
+
+const promoCodes={
+ SMOBX100:{coins:100,xp:20},
+ WELCOME:{coins:250,xp:30},
+ GOLDEN:{coins:500,xp:50},
+ KING:{coins:1000,xp:100},
+ UPDATE20:{coins:2000,xp:150}
+};
+
+function usePromo(){
+ const input=document.getElementById("promoInput");
+ const result=document.getElementById("promoResult");
+ const code=input.value.trim().toUpperCase();
+ if(!code){
+  result.textContent="Введи промокод!";
+  return;
+ }
+ if(game.usedPromos.includes(code)){
+  result.textContent="Цей промокод уже використаний!";
+  return;
+ }
+ const promo=promoCodes[code];
+ if(!promo){
+  result.textContent="❌ Неправильний промокод!";
+  return;
+ }
+ addCoins(promo.coins);
+ addXP(promo.xp);
+ game.usedPromos.push(code);
+ result.textContent="🎉 +"+promo.coins+" монет та +"+promo.xp+" XP!";
+ input.value="";
+ updateAll();
+}
+
+function updateAll(){
+ document.getElementById("coins").textContent=format(game.coins);
+ document.getElementById("level").textContent=game.level;
+ document.getElementById("xp").textContent=game.xp;
+ document.getElementById("nextxp").textContent=game.level*100;
+ document.getElementById("xpbar").style.width=
+  (game.xp/(game.level*100)*100)+"%";
+ document.getElementById("power").textContent=game.power;
+ document.getElementById("clicks").textContent=format(game.clicks);
+ document.getElementById("earned").textContent=format(game.earned);
+
+ renderInventory();
+ renderShop();
+ updateProfile();
+
+ if(document.getElementById("upgrader").classList.contains("active")){
+  updateUpgrader();
+ }
+ saveGame();
+}
+
+function resetGame(){
+ if(!confirm("Точно скинути весь прогрес? Це не можна буде скасувати!"))return;
+ localStorage.removeItem("smobx_clicker_2");
+ location.reload();
+}
+
+loadGame();
+renderCases();
+updateAll();
+
+if(window.Telegram&&window.Telegram.WebApp){
+ window.Telegram.WebApp.ready();
+ window.Telegram.WebApp.expand();
+}
+</script>
+</body>
+</html>
